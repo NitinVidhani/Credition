@@ -39,6 +39,8 @@ public class TransferCreditDialog extends AppCompatDialogFragment {
         LayoutInflater inflater = getActivity().getLayoutInflater();
         View view = inflater.inflate(R.layout.dialog_layout, null);
 
+        int id = getArguments().getInt("id");
+
         builder.setView(view)
                 .setTitle("Select User")
                 .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -67,10 +69,10 @@ public class TransferCreditDialog extends AppCompatDialogFragment {
         List<String> spinnerText = new ArrayList<>();
 
 
-
         spinnerText.add("Select User");
-        for(User user : userList) {
-            spinnerText.add(user.getUserName() + "(" + user.getId() + ")");
+        for (User user : userList) {
+            if (user.getId() != id)
+                spinnerText.add(user.getUserName() + "(" + user.getId() + ")");
         }
 
         ArrayAdapter<String> arrayAdapter = new ArrayAdapter<>(getActivity(), android.R.layout.simple_spinner_item, spinnerText);

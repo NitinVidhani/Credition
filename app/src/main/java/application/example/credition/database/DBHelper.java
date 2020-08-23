@@ -11,6 +11,7 @@ import androidx.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
+import application.example.credition.model.Transaction;
 import application.example.credition.model.User;
 
 public class DBHelper extends SQLiteOpenHelper {
@@ -22,6 +23,11 @@ public class DBHelper extends SQLiteOpenHelper {
     public static final String USER_EMAIL = "user_email";
     public static final String USER_IMAGE = "user_image";
     public static final String CREDITS = "credits";
+
+    public static final String TRANSACTIONS = "transactions";
+    public static final String TRANSACTION_ID = "transaction_id";
+    public static final String FROM = "transaction_from";
+    public static final String TO = "transaction_to";
 
     public DBHelper(@Nullable Context context) {
         super(context, DB_NAME, null, 1);
@@ -37,13 +43,26 @@ public class DBHelper extends SQLiteOpenHelper {
                 USER_IMAGE + " TEXT," +
                 CREDITS + " INTEGER)";
 
+        String createTableTransactions = "CREATE TABLE " + TRANSACTIONS + "(" +
+                TRANSACTION_ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
+                FROM + " INTEGER NOT NULL," +
+                TO + " INTEGER NOT NULL," +
+                CREDITS + " INTEGER NOT NULL)";
+
         db.execSQL(createTableUsers);
 
+        db.execSQL(createTableTransactions);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         String dropTableUsers = "DROP TABLE IF EXISTS " + USERS;
+        String dropTableTransactions = "DROP TABLE IF EXISTS " + TRANSACTIONS;
+
+        db.execSQL(dropTableUsers);
+        db.execSQL(dropTableTransactions);
+        onCreate(db);
+
     }
 
     public boolean insertUser(User user) {
@@ -83,6 +102,20 @@ public class DBHelper extends SQLiteOpenHelper {
         return credits;
     }
 
+    public String getNameById(int id) {
+        String username = null;
+        List<User> list = getAllUsers();
+
+        for (User user : list) {
+            if (user.getId() == id) {
+                username = user.getUserName();
+                break;
+            }
+        }
+
+        return username;
+    }
+
     public boolean transferCredits(int fromId, int toId, int creditToBeTransferred) {
 
         SQLiteDatabase db = this.getWritableDatabase();
@@ -95,6 +128,7 @@ public class DBHelper extends SQLiteOpenHelper {
             if (applyTransaction(fromId, toId, creditToBeTransferred)) {
                 db.setTransactionSuccessful();
                 isTransactionSuccessfull = true;
+                insertTransaction(new Transaction(fromId, toId, creditToBeTransferred));
             }
         } catch (Exception e) {
 
@@ -157,5 +191,50 @@ public class DBHelper extends SQLiteOpenHelper {
         return userList;
     }
 
+    public boolean insertTransaction(Transaction transaction) {
+
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        int fromId = transaction.getFromId();
+        int toId = transaction.getToId();
+        int credits = transaction.getAmount();
+
+        ContentValues cv = new ContentValues();
+        cv.put(FROM, fromId);
+        cv.put(TO, toId);
+        cv.put(CREDITS, credits);
+
+        long success = db.insert(TRANSACTIONS, null, cv);
+        if (success == -1) {
+            return false;
+        }
+        return true;
+
+    }
+
+    public List<Transaction> getAllTransactions() {
+
+        List<Transaction> transactionList = new ArrayList<>();
+
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        String query = "SELECT * FROM " + TRANSACTIONS;
+
+        Cursor cursor = db.rawQuery(query, null);
+
+        while (cursor.moveToNext()) {
+            int id = cursor.getInt(0);
+            int fromId = cursor.getInt(1);
+            int toId = cursor.getInt(2);
+            int credits = cursor.getInt(3);
+
+            Transaction transaction = new Transaction(id, fromId, toId, credits);
+            transactionList.add(transaction);
+
+        }
+
+        return transactionList;
+
+    }
 
 }

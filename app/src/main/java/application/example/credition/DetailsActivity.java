@@ -55,6 +55,9 @@ public class DetailsActivity extends AppCompatActivity implements TransferCredit
     public void transferCredits(View view) {
 
         TransferCreditDialog dialog = new TransferCreditDialog();
+        Bundle bundle = new Bundle();
+        bundle.putInt("id", fromId);
+        dialog.setArguments(bundle);
         dialog.show(getSupportFragmentManager(), "Transfer Dialog");
 
     }
